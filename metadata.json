@@ -1,0 +1,7 @@
+{
+  "name": "Guntur Smart Traffic AI",
+  "description": "AI-Driven Smart Traffic Prediction and Intelligent Routing System for Urban Mobility in Guntur City using Deep Learning insights.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
