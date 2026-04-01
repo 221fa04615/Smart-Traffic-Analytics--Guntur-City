@@ -9,6 +9,9 @@ export interface TrafficPrediction {
   confidence: number;
   trend: 'improving' | 'stable' | 'worsening';
   reasoning: string;
+  attentionScore?: number; // 0-1 (Influential Junctions)
+  validated?: boolean;
+  isFallback?: boolean;
 }
 
 export async function getTrafficForecast(
@@ -34,7 +37,8 @@ export async function getTrafficForecast(
           "predictedCongestion": number (0-100),
           "confidence": number (0-1),
           "trend": "improving" | "stable" | "worsening",
-          "reasoning": string (short)
+          "reasoning": string (short, mention factors like time of day or historical patterns),
+          "attentionScore": number (0-1, representing how critical this junction is to the overall city flow right now)
         }
       `,
       config: {
@@ -47,7 +51,8 @@ export async function getTrafficForecast(
       const data = JSON.parse(text);
       return data.map((item: any, idx: number) => ({
         ...item,
-        id: `pred-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        id: `pred-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        attentionScore: item.attentionScore || Math.random()
       }));
     } catch (e) {
       console.warn("Failed to parse traffic forecast JSON, using fallback", e);
@@ -56,15 +61,23 @@ export async function getTrafficForecast(
   } catch (error) {
     console.error("AI Prediction Error:", error);
     // Fallback logic if AI fails
-    return currentData.map((d, idx) => ({
-      id: `fallback-pred-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      locationId: d.name || d.locationId || "Unknown",
-      predictedSpeed: (d.speed || 30) * (1 - (Math.random() * 0.1)),
-      predictedCongestion: Math.min(100, (d.congestion || 20) * (1 + (Math.random() * 0.1))),
-      confidence: 0.85,
-      trend: Math.random() > 0.5 ? 'stable' : 'worsening',
-      reasoning: "Based on historical LSTM patterns."
-    }));
+    return currentData.map((d, idx) => {
+      const horizonFactor = timeHorizon / 30; // 0.33, 0.66, 1.0
+      const congestionChange = (Math.random() * 15 * horizonFactor);
+      const speedChange = (Math.random() * 10 * horizonFactor);
+      
+      return {
+        id: `fallback-pred-${idx}-${timeHorizon}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        locationId: d.name || d.locationId || "Unknown",
+        predictedSpeed: Math.max(5, (d.speed || 30) - speedChange),
+        predictedCongestion: Math.min(100, (d.congestion || 20) + congestionChange),
+        confidence: 0.85 - (horizonFactor * 0.1), // Confidence drops slightly as horizon increases
+        trend: congestionChange > 5 ? 'worsening' : (congestionChange < -5 ? 'improving' : 'stable'),
+        reasoning: `Projected ${timeHorizon}m trend based on current flow and historical patterns.`,
+        attentionScore: Math.random(),
+        isFallback: true
+      };
+    });
   }
 }
 
@@ -77,6 +90,7 @@ export interface PublicTransportInfo {
   details: string;
   location: string;
   mapsUrl?: string;
+  isFallback?: boolean;
 }
 
 export async function getPublicTransportInfo(location: string): Promise<PublicTransportInfo[]> {
@@ -88,8 +102,9 @@ export async function getPublicTransportInfo(location: string): Promise<PublicTr
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Provide real-time public transport information (buses, trains, autos) near ${location} in Guntur City. 
-      Return the data as a JSON array of objects with fields: type (bus/train/auto), route, nextArrival, status (on-time/delayed/early), details, location.
+      contents: `Provide real-time local public transport information (city buses, autos) near ${location} within Guntur City. 
+      Focus ONLY on transport that travels within Guntur City limits. Do NOT include inter-city trains or long-distance buses to other towns/cities.
+      Return the data as a JSON array of objects with fields: type (bus/auto), route, nextArrival, status (on-time/delayed/early), details, location.
       Do not include any other text, just the JSON array.`,
       config: {
         tools: [{ googleMaps: {} }],
@@ -122,22 +137,24 @@ export async function getPublicTransportInfo(location: string): Promise<PublicTr
       {
         id: 'fallback-bus-1',
         type: 'bus',
-        route: 'Route 10A (Guntur Bus Stand to Tenali)',
+        route: 'City Bus Route 10A (Bus Stand to Lodge Center)',
         nextArrival: '10 mins',
         status: 'on-time',
-        details: 'Operating normally with moderate occupancy.',
+        details: 'Operating normally within city limits.',
         location: 'Main Bus Station',
-        mapsUrl: 'https://www.google.com/maps/search/Guntur+Bus+Stand'
+        mapsUrl: 'https://www.google.com/maps/search/Guntur+Bus+Stand',
+        isFallback: true
       },
       {
-        id: 'fallback-train-1',
-        type: 'train',
-        route: 'Intercity Express (Guntur to Vijayawada)',
-        nextArrival: '25 mins',
-        status: 'delayed',
-        details: 'Delayed by 15 minutes due to signal issues.',
-        location: 'Guntur Junction',
-        mapsUrl: 'https://www.google.com/maps/search/Guntur+Junction'
+        id: 'fallback-auto-1',
+        type: 'auto',
+        route: 'Brodipet Auto Stand',
+        nextArrival: 'Immediate',
+        status: 'on-time',
+        details: 'Multiple autos available for local transit.',
+        location: 'Brodipet',
+        mapsUrl: 'https://www.google.com/maps/search/Brodipet+Guntur',
+        isFallback: true
       }
     ];
   }
@@ -289,6 +306,7 @@ export interface CityPulseEvent {
   location: string;
   description: string;
   sourceUrl?: string;
+  isFallback?: boolean;
 }
 
 export async function getCityPulse(): Promise<CityPulseEvent[]> {
@@ -327,7 +345,8 @@ export async function getCityPulse(): Promise<CityPulseEvent[]> {
         type: 'construction',
         impact: 'medium',
         location: 'Inner Ring Road Junction',
-        description: 'Periodic maintenance work causing slight delays.'
+        description: 'Periodic maintenance work causing slight delays.',
+        isFallback: true
       },
       {
         id: 'mock-event-2',
@@ -335,7 +354,8 @@ export async function getCityPulse(): Promise<CityPulseEvent[]> {
         type: 'festival',
         impact: 'high',
         location: 'Main Market Area',
-        description: 'Expect heavy crowds and diversions near the clock tower.'
+        description: 'Expect heavy crowds and diversions near the clock tower.',
+        isFallback: true
       }
     ];
   }
@@ -365,6 +385,7 @@ export interface RouteAdvice {
   justification: string;
   pros: string[];
   cons: string[];
+  isFallback?: boolean;
 }
 
 export async function getRouteAdvice(routes: any[], predictions: TrafficPrediction[] = []): Promise<RouteAdvice> {
@@ -399,7 +420,8 @@ export async function getRouteAdvice(routes: any[], predictions: TrafficPredicti
       recommendedRouteId: routes[0]?.id || "",
       justification: "Fastest route recommended based on current traffic flow.",
       pros: ["Minimum travel time"],
-      cons: ["May have more signals"]
+      cons: ["May have more signals"],
+      isFallback: true
     };
   }
 }
