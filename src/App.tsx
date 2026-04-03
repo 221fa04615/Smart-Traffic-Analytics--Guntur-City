@@ -519,7 +519,7 @@ export default function App() {
       ];
       const randomUpdate = updates[Math.floor(Math.random() * updates.length)];
       const newNotif: Notification = {
-        id: `realtime_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `realtime_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${Math.floor(Math.random() * 1000)}`,
         message: randomUpdate,
         type: Math.random() > 0.7 ? 'warning' : 'info',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -952,11 +952,11 @@ export default function App() {
               
               <div className="space-y-4">
                 {cityPulse.length > 0 ? (
-                  cityPulse.map((event) => (
+                  cityPulse.map((event, idx) => (
                     <motion.div 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      key={event.id} 
+                      key={`pulse-event-${event.id}-${idx}`} 
                       className="p-4 bg-zinc-800/30 border border-zinc-700/50 rounded-2xl space-y-2 group hover:border-pink-500/30 transition-all"
                     >
                       <div className="flex justify-between items-start">
@@ -1215,7 +1215,7 @@ export default function App() {
                           className="w-full pl-12 pr-4 py-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-sm font-medium outline-none focus:border-blue-500/50 focus:bg-zinc-800 transition-all appearance-none cursor-pointer text-zinc-200"
                         >
                           <option value="" disabled>Select Source</option>
-                          {GUNTUR_LOCATIONS.map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
+                          {GUNTUR_LOCATIONS.map(loc => <option key={`start-${loc.id}`} value={loc.id}>{loc.name}</option>)}
                         </select>
                       </div>
 
@@ -1229,7 +1229,7 @@ export default function App() {
                           className="w-full pl-12 pr-4 py-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-sm font-medium outline-none focus:border-blue-500/50 focus:bg-zinc-800 transition-all appearance-none cursor-pointer text-zinc-200"
                         >
                           <option value="" disabled>Select Destination</option>
-                          {GUNTUR_LOCATIONS.map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
+                          {GUNTUR_LOCATIONS.map(loc => <option key={`end-${loc.id}`} value={loc.id}>{loc.name}</option>)}
                         </select>
                       </div>
 
@@ -1409,9 +1409,9 @@ export default function App() {
                         <h3 className="text-[11px] font-bold uppercase tracking-[0.2em]">Saved Routes</h3>
                       </div>
                       <div className="space-y-2">
-                        {user.savedRoutes.map((saved) => (
+                        {user.savedRoutes.map((saved, idx) => (
                           <button
-                            key={saved.id}
+                            key={`saved-route-${saved.id}-${idx}`}
                             onClick={() => handleLoadSavedRoute(saved)}
                             className="w-full p-4 bg-zinc-800/30 border border-zinc-700/30 rounded-xl hover:border-blue-500/30 transition-all text-left group"
                           >
@@ -1517,8 +1517,8 @@ export default function App() {
                   <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Analyzing Trends for {selectedTimeHorizon}m</p>
                 </div>
               ) : (
-                predictions.map((pred) => (
-                  <div key={`pred-card-${pred.id}`} className="p-4 bg-zinc-800/30 border border-zinc-700/30 rounded-xl hover:border-zinc-700 transition-all">
+                predictions.map((pred, idx) => (
+                  <div key={`pred-card-${pred.id}-${idx}`} className="p-4 bg-zinc-800/30 border border-zinc-700/30 rounded-xl hover:border-zinc-700 transition-all">
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <h4 className="text-[10px] font-bold uppercase tracking-tight text-zinc-100">{pred.locationId}</h4>
@@ -1657,8 +1657,8 @@ export default function App() {
                   Fetching Schedules...
                 </div>
               ) : (
-                publicTransport.map((item) => (
-                  <div key={`transport-item-${item.id}`} className="p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl space-y-2 hover:border-zinc-600 transition-all">
+                publicTransport.map((item, idx) => (
+                  <div key={`transport-item-${item.id}-${idx}`} className="p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl space-y-2 hover:border-zinc-600 transition-all">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-2">
                         {item.type === 'bus' ? <Bus className="w-3 h-3 text-blue-400" /> : <MapIcon className="w-3 h-3 text-green-400" />}
@@ -1698,10 +1698,10 @@ export default function App() {
               <h3 className="text-[11px] font-bold uppercase tracking-[0.2em]">Parking Availability</h3>
             </div>
             <div className="space-y-3">
-              {PARKING_AREAS.map((parking) => {
+              {PARKING_AREAS.map((parking, idx) => {
                 const occupancyRate = (parking.occupied / parking.capacity) * 100;
                 return (
-                  <div key={parking.id} className="p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl space-y-3 hover:border-zinc-600 transition-all">
+                  <div key={`parking-card-${parking.id}-${idx}`} className="p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl space-y-3 hover:border-zinc-600 transition-all">
                     <div className="flex justify-between items-start">
                       <p className="text-[10px] font-bold uppercase tracking-tight text-zinc-100">{parking.name}</p>
                       <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase ${
@@ -1739,9 +1739,9 @@ export default function App() {
             </div>
             <div className="space-y-2">
               <AnimatePresence>
-                {notifications.map((notif) => (
+                {notifications.map((notif, idx) => (
                   <motion.div
-                    key={`notif-${notif.id}`}
+                    key={`notif-${notif.id}-${idx}`}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
@@ -1835,11 +1835,11 @@ export default function App() {
             </button>
           </div>
 
-          {trafficData.map(loc => {
+          {trafficData.map((loc, idx) => {
             const prediction = predictions.find(p => p.locationId === loc.id);
             return (
               <Marker 
-                key={`marker-loc-${loc.id}`} 
+                key={`marker-loc-${loc.id}-${idx}`} 
                 position={[loc.lat, loc.lng]}
                 icon={L.divIcon({
                   className: 'custom-marker',
@@ -1900,7 +1900,7 @@ export default function App() {
           })}
 
           {/* Background Traffic Network (Edges) */}
-          {showTrafficEdges && trafficEdgesData.map((edge) => {
+          {showTrafficEdges && trafficEdgesData.map((edge, idx) => {
             const sourceNode = GUNTUR_LOCATIONS.find(l => l.id === edge.source);
             const targetNode = GUNTUR_LOCATIONS.find(l => l.id === edge.target);
             if (!sourceNode || !targetNode) return null;
@@ -1911,7 +1911,7 @@ export default function App() {
 
             return (
               <Polyline
-                key={`network-edge-${edge.id}`}
+                key={`network-edge-${edge.id}-${idx}`}
                 positions={positions}
                 color={color}
                 weight={selectedRouteId ? 1.5 : 3}
@@ -2017,12 +2017,12 @@ export default function App() {
           ))}
 
           {/* AI Attention Markers (Influential Junctions) */}
-          {predictions.filter(p => (p.attentionScore || 0) > 0.7).map((pred) => {
+          {predictions.filter(p => (p.attentionScore || 0) > 0.7).map((pred, idx) => {
             const loc = GUNTUR_LOCATIONS.find(l => l.id === pred.locationId || l.name === pred.locationId);
             if (!loc) return null;
             return (
               <Marker 
-                key={`attention-${pred.id}`}
+                key={`attention-${pred.id}-${idx}`}
                 position={[loc.lat, loc.lng]}
                 icon={L.divIcon({
                   className: 'attention-marker',
@@ -2049,9 +2049,9 @@ export default function App() {
           })}
 
           {/* Parking Area Markers */}
-          {PARKING_AREAS.map((parking) => (
+          {PARKING_AREAS.map((parking, idx) => (
             <Marker 
-              key={`marker-pkg-${parking.id}`}
+              key={`marker-pkg-${parking.id}-${idx}`}
               position={[parking.lat, parking.lng]}
               icon={L.divIcon({
                 className: 'parking-marker',

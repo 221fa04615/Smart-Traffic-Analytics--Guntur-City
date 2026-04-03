@@ -14,10 +14,42 @@ export interface TrafficPrediction {
   isFallback?: boolean;
 }
 
+// Simple in-memory cache to reduce API calls
+const aiCache = new Map<string, { data: any, timestamp: number }>();
+const CACHE_TTL = 300000; // 5 minutes
+
+function getCached(key: string) {
+  const cached = aiCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setCached(key: string, data: any) {
+  aiCache.set(key, { data, timestamp: Date.now() });
+}
+
+function isQuotaError(error: any): boolean {
+  const errStr = JSON.stringify(error).toLowerCase();
+  return errStr.includes("429") || 
+         errStr.includes("quota") || 
+         errStr.includes("resource_exhausted") ||
+         (error?.message && (
+           error.message.toLowerCase().includes("429") || 
+           error.message.toLowerCase().includes("quota") || 
+           error.message.toLowerCase().includes("resource_exhausted")
+         ));
+}
+
 export async function getTrafficForecast(
   currentData: any[],
   timeHorizon: number // minutes (10, 20, 30)
 ): Promise<TrafficPrediction[]> {
+  const cacheKey = `forecast-${timeHorizon}-${JSON.stringify(currentData.slice(0, 5))}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -49,18 +81,22 @@ export async function getTrafficForecast(
     const text = response.text || "[]";
     try {
       const data = JSON.parse(text);
-      return data.map((item: any, idx: number) => ({
+      const result = data.map((item: any, idx: number) => ({
         ...item,
         id: `pred-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         attentionScore: item.attentionScore || Math.random()
       }));
+      setCached(cacheKey, result);
+      return result;
     } catch (e) {
       console.warn("Failed to parse traffic forecast JSON, using fallback", e);
       throw new Error("Invalid format");
     }
-  } catch (error) {
-    console.error("AI Prediction Error:", error);
-    // Fallback logic if AI fails
+  } catch (error: any) {
+    const quotaExceeded = isQuotaError(error);
+    if (!quotaExceeded) console.error("AI Prediction Error:", error);
+    
+    // Fallback logic if AI fails or quota exceeded
     return currentData.map((d, idx) => {
       const horizonFactor = timeHorizon / 30; // 0.33, 0.66, 1.0
       const congestionChange = (Math.random() * 15 * horizonFactor);
@@ -73,7 +109,7 @@ export async function getTrafficForecast(
         predictedCongestion: Math.min(100, (d.congestion || 20) + congestionChange),
         confidence: 0.85 - (horizonFactor * 0.1), // Confidence drops slightly as horizon increases
         trend: congestionChange > 5 ? 'worsening' : (congestionChange < -5 ? 'improving' : 'stable'),
-        reasoning: `Projected ${timeHorizon}m trend based on current flow and historical patterns.`,
+        reasoning: quotaExceeded ? "Using historical patterns (AI Quota Exceeded)" : `Projected ${timeHorizon}m trend based on current flow and historical patterns.`,
         attentionScore: Math.random(),
         isFallback: true
       };
@@ -94,6 +130,10 @@ export interface PublicTransportInfo {
 }
 
 export async function getPublicTransportInfo(location: string): Promise<PublicTransportInfo[]> {
+  const cacheKey = `transport-${location}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -121,32 +161,36 @@ export async function getPublicTransportInfo(location: string): Promise<PublicTr
     
     try {
       const data = JSON.parse(text);
-      return data.map((item: any, idx: number) => ({
+      const result = data.map((item: any, idx: number) => ({
         ...item,
         id: `transport-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         mapsUrl: mapsUrl || item.mapsUrl
       }));
+      setCached(cacheKey, result);
+      return result;
     } catch (e) {
       console.warn("Failed to parse transport JSON, returning fallback", e);
       throw new Error("Invalid format");
     }
-  } catch (error) {
-    console.error("Public Transport Info Error:", error);
+  } catch (error: any) {
+    const quotaExceeded = isQuotaError(error);
+    if (!quotaExceeded) console.error("Public Transport Info Error:", error);
+    
     // Fallback mock data
     return [
       {
-        id: 'fallback-bus-1',
+        id: `fallback-bus-1-${Date.now()}`,
         type: 'bus',
         route: 'City Bus Route 10A (Bus Stand to Lodge Center)',
         nextArrival: '10 mins',
         status: 'on-time',
-        details: 'Operating normally within city limits.',
+        details: quotaExceeded ? 'Operating normally (AI Quota Exceeded)' : 'Operating normally within city limits.',
         location: 'Main Bus Station',
         mapsUrl: 'https://www.google.com/maps/search/Guntur+Bus+Stand',
         isFallback: true
       },
       {
-        id: 'fallback-auto-1',
+        id: `fallback-auto-1-${Date.now()}`,
         type: 'auto',
         route: 'Brodipet Auto Stand',
         nextArrival: 'Immediate',
@@ -200,8 +244,10 @@ export async function analyzeIncident(
     });
 
     return JSON.parse(response.text || "{}");
-  } catch (error) {
-    console.error("Incident Analysis Error:", error);
+  } catch (error: any) {
+    const quotaExceeded = isQuotaError(error);
+    if (!quotaExceeded) console.error("Incident Analysis Error:", error);
+    
     return {
       type: 'other',
       severity: 'medium',
@@ -209,7 +255,7 @@ export async function analyzeIncident(
       impactRadius: 1,
       estimatedDuration: 'Unknown',
       suggestedAction: 'Avoid the area if possible.',
-      description: 'AI analysis failed, manual verification required.'
+      description: quotaExceeded ? 'AI analysis unavailable (Quota Exceeded). Manual verification required.' : 'AI analysis failed, manual verification required.'
     };
   }
 }
@@ -239,13 +285,22 @@ export async function processVoiceCommand(command: string): Promise<VoiceAction>
     });
 
     return JSON.parse(response.text || "{}");
-  } catch (error) {
-    console.error("Voice Processing Error:", error);
-    return { action: 'unknown', params: {}, response: "I'm sorry, I couldn't understand that command." };
+  } catch (error: any) {
+    const quotaExceeded = isQuotaError(error);
+    if (!quotaExceeded) console.error("Voice Processing Error:", error);
+    return { 
+      action: 'unknown', 
+      params: {}, 
+      response: quotaExceeded ? "Voice AI is temporarily unavailable due to high demand. Please try again later." : "I'm sorry, I couldn't understand that command." 
+    };
   }
 }
 
 export async function getDailyBriefing(currentData: any[]): Promise<string> {
+  const cacheKey = 'daily-briefing';
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error("GEMINI_API_KEY is not defined");
@@ -257,10 +312,13 @@ export async function getDailyBriefing(currentData: any[]): Promise<string> {
       Mention hotspots, best travel times, and any general advice. Keep it under 100 words.`,
     });
 
-    return response.text || "Traffic is currently normal across Guntur City.";
-  } catch (error) {
-    console.error("Briefing Error:", error);
-    return "Unable to generate briefing at this time.";
+    const result = response.text || "Traffic is currently normal across Guntur City.";
+    setCached(cacheKey, result);
+    return result;
+  } catch (error: any) {
+    const quotaExceeded = isQuotaError(error);
+    if (!quotaExceeded) console.error("Briefing Error:", error);
+    return quotaExceeded ? "Briefing unavailable (AI Quota Exceeded). Traffic is currently normal." : "Unable to generate briefing at this time.";
   }
 }
 
@@ -273,6 +331,10 @@ export interface ParkingPrediction {
 }
 
 export async function getParkingPrediction(location: string): Promise<ParkingPrediction> {
+  const cacheKey = `parking-${location}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error("GEMINI_API_KEY is not defined");
@@ -286,14 +348,17 @@ export async function getParkingPrediction(location: string): Promise<ParkingPre
       config: { responseMimeType: "application/json" }
     });
 
-    return JSON.parse(response.text || "{}");
-  } catch (error) {
-    console.error("Parking Prediction Error:", error);
+    const result = JSON.parse(response.text || "{}");
+    setCached(cacheKey, result);
+    return result;
+  } catch (error: any) {
+    const quotaExceeded = isQuotaError(error);
+    if (!quotaExceeded) console.error("Parking Prediction Error:", error);
     return {
       location,
       probability: 0.5,
       trend: 'stable',
-      reasoning: "Unable to calculate precise probability. Historical average used."
+      reasoning: quotaExceeded ? "AI Quota Exceeded. Using historical average for parking probability." : "Unable to calculate precise probability. Historical average used."
     };
   }
 }
@@ -310,6 +375,10 @@ export interface CityPulseEvent {
 }
 
 export async function getCityPulse(): Promise<CityPulseEvent[]> {
+  const cacheKey = 'city-pulse';
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error("GEMINI_API_KEY is not defined");
@@ -330,26 +399,30 @@ export async function getCityPulse(): Promise<CityPulseEvent[]> {
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
     const sourceUrl = groundingChunks?.[0]?.web?.uri;
 
-    return data.map((item: any, idx: number) => ({ 
+    const result = data.map((item: any, idx: number) => ({ 
       ...item, 
       id: `pulse-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       sourceUrl 
     }));
-  } catch (error) {
-    console.error("City Pulse Error:", error);
+    setCached(cacheKey, result);
+    return result;
+  } catch (error: any) {
+    const quotaExceeded = isQuotaError(error);
+    if (!quotaExceeded) console.error("City Pulse Error:", error);
+    
     // Return some mock events if API fails to keep the UI populated
     return [
       {
-        id: 'mock-event-1',
+        id: `mock-event-1-${Date.now()}`,
         title: 'Road Maintenance - Inner Ring Road',
         type: 'construction',
         impact: 'medium',
         location: 'Inner Ring Road Junction',
-        description: 'Periodic maintenance work causing slight delays.',
+        description: quotaExceeded ? 'Periodic maintenance work (AI Quota Exceeded)' : 'Periodic maintenance work causing slight delays.',
         isFallback: true
       },
       {
-        id: 'mock-event-2',
+        id: `mock-event-2-${Date.now()}`,
         title: 'Local Festival Procession',
         type: 'festival',
         impact: 'high',
@@ -362,6 +435,10 @@ export async function getCityPulse(): Promise<CityPulseEvent[]> {
 }
 
 export async function getEcoFriendlyAdvice(routeDetails: any): Promise<string> {
+  const cacheKey = `eco-${JSON.stringify(routeDetails)}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error("GEMINI_API_KEY is not defined");
@@ -373,10 +450,13 @@ export async function getEcoFriendlyAdvice(routeDetails: any): Promise<string> {
       Mention carbon offset, public transport alternatives, or driving habits. Keep it under 40 words.`,
     });
 
-    return response.text || "Consider carpooling to reduce your carbon footprint today.";
-  } catch (error) {
-    console.error("Eco Advice Error:", error);
-    return "Drive at a steady speed to improve fuel efficiency.";
+    const result = response.text || "Consider carpooling to reduce your carbon footprint today.";
+    setCached(cacheKey, result);
+    return result;
+  } catch (error: any) {
+    const quotaExceeded = isQuotaError(error);
+    if (!quotaExceeded) console.error("Eco Advice Error:", error);
+    return quotaExceeded ? "Eco-tip: Drive at a steady speed to improve fuel efficiency (AI Quota Exceeded)." : "Drive at a steady speed to improve fuel efficiency.";
   }
 }
 
@@ -389,6 +469,10 @@ export interface RouteAdvice {
 }
 
 export async function getRouteAdvice(routes: any[], predictions: TrafficPrediction[] = []): Promise<RouteAdvice> {
+  const cacheKey = `route-advice-${JSON.stringify(routes.map(r => r.id))}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error("GEMINI_API_KEY is not defined");
@@ -413,12 +497,15 @@ export async function getRouteAdvice(routes: any[], predictions: TrafficPredicti
       config: { responseMimeType: "application/json" }
     });
 
-    return JSON.parse(response.text || "{}");
-  } catch (error) {
-    console.error("Route Advice Error:", error);
+    const result = JSON.parse(response.text || "{}");
+    setCached(cacheKey, result);
+    return result;
+  } catch (error: any) {
+    const quotaExceeded = isQuotaError(error);
+    if (!quotaExceeded) console.error("Route Advice Error:", error);
     return {
       recommendedRouteId: routes[0]?.id || "",
-      justification: "Fastest route recommended based on current traffic flow.",
+      justification: quotaExceeded ? "Fastest route recommended (AI Quota Exceeded)." : "Fastest route recommended based on current traffic flow.",
       pros: ["Minimum travel time"],
       cons: ["May have more signals"],
       isFallback: true
