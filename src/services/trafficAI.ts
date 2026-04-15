@@ -16,7 +16,7 @@ export interface TrafficPrediction {
 
 // Simple in-memory cache to reduce API calls
 const aiCache = new Map<string, { data: any, timestamp: number }>();
-const CACHE_TTL = 300000; // 5 minutes
+const CACHE_TTL = 900000; // 15 minutes
 
 function getCached(key: string) {
   const cached = aiCache.get(key);
@@ -57,7 +57,7 @@ export async function getTrafficForecast(
     }
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: `
         Analyze the following traffic data for Guntur City and predict the traffic state in ${timeHorizon} minutes.
         Current Data: ${JSON.stringify(currentData.slice(0, 10))}
@@ -141,13 +141,13 @@ export async function getPublicTransportInfo(location: string): Promise<PublicTr
     }
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: `Provide real-time local public transport information (city buses, autos) near ${location} within Guntur City. 
       Focus ONLY on transport that travels within Guntur City limits. Do NOT include inter-city trains or long-distance buses to other towns/cities.
       Return the data as a JSON array of objects with fields: type (bus/auto), route, nextArrival, status (on-time/delayed/early), details, location.
       Do not include any other text, just the JSON array.`,
       config: {
-        tools: [{ googleMaps: {} }],
+        tools: [{ googleMaps: {} } as any],
       },
     });
 
@@ -238,7 +238,7 @@ export async function analyzeIncident(
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: { parts },
       config: { responseMimeType: "application/json" }
     });
@@ -277,7 +277,7 @@ export async function processVoiceCommand(command: string): Promise<VoiceAction>
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: `Process this voice command for a Guntur Traffic AI app: "${command}"
       Possible actions: navigate (params: destination), query_traffic (params: location), report_incident (params: incidentType).
       Return a JSON object: { action, params, response (friendly voice response) }.`,
@@ -307,7 +307,7 @@ export async function getDailyBriefing(currentData: any[]): Promise<string> {
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: `Generate a concise, professional daily traffic briefing for Guntur City based on this data: ${JSON.stringify(currentData.slice(0, 5))}.
       Mention hotspots, best travel times, and any general advice. Keep it under 100 words.`,
     });
@@ -341,7 +341,7 @@ export async function getParkingPrediction(location: string): Promise<ParkingPre
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: `Predict parking availability near ${location} in Guntur City. 
       Consider time of day, day of week, and local hotspots.
       Return a JSON object: { location, probability (0-1), trend (filling/clearing/stable), bestAlternative, reasoning }.`,
@@ -385,10 +385,10 @@ export async function getCityPulse(): Promise<CityPulseEvent[]> {
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: "Search for current events, festivals, protests, or major road closures in Guntur City, Andhra Pradesh that might affect traffic today. Provide the results as a JSON array of objects: { title, type, impact, location, description }.",
       config: {
-        tools: [{ googleSearch: {} }],
+        tools: [{ googleSearch: {} } as any],
         responseMimeType: "application/json",
       },
     });
@@ -445,7 +445,7 @@ export async function getEcoFriendlyAdvice(routeDetails: any): Promise<string> {
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: `Provide one specific, actionable eco-friendly tip for a commuter traveling this route in Guntur: ${JSON.stringify(routeDetails)}.
       Mention carbon offset, public transport alternatives, or driving habits. Keep it under 40 words.`,
     });
@@ -479,7 +479,7 @@ export async function getRouteAdvice(routes: any[], predictions: TrafficPredicti
     const ai = new GoogleGenAI({ apiKey });
 
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       contents: `Compare these potential routes for a driver in Guntur City and recommend the best one.
       Routes: ${JSON.stringify(routes.map(r => ({
         id: r.id,

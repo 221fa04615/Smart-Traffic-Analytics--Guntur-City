@@ -247,42 +247,34 @@ export default function App() {
 
   // Fetch Daily Briefing
   useEffect(() => {
-    const fetchBriefing = async () => {
+    const timer = setTimeout(async () => {
       setIsBriefingLoading(true);
       try {
         const briefing = await getDailyBriefing(trafficData);
         setDailyBriefing(briefing);
-        if (briefing.includes("Unable to generate briefing")) {
-          setIsAiOffline(true);
-        }
       } catch (err) {
         console.error("Briefing fetch failed:", err);
-        setIsAiOffline(true);
       } finally {
         setIsBriefingLoading(false);
       }
-    };
-    fetchBriefing();
+    }, 500); // 500ms delay
+    return () => clearTimeout(timer);
   }, [trafficData]);
 
   // Fetch City Pulse
   useEffect(() => {
-    const fetchPulse = async () => {
+    const timer = setTimeout(async () => {
       setIsPulseLoading(true);
       try {
         const pulse = await getCityPulse();
         setCityPulse(pulse);
-        if (pulse.some(p => (p as any).isFallback)) {
-          setIsAiOffline(true);
-        }
       } catch (err) {
         console.error("City Pulse fetch failed:", err);
-        setIsAiOffline(true);
       } finally {
         setIsPulseLoading(false);
       }
-    };
-    fetchPulse();
+    }, 1500); // 1.5s delay to stagger
+    return () => clearTimeout(timer);
   }, []);
 
   // Fetch Parking Prediction when destination changes
@@ -574,9 +566,6 @@ export default function App() {
       setIsAdviceLoading(true);
       const trafficPredictions = await getTrafficForecast([...trafficData, ...trafficEdgesData], selectedTimeHorizon);
       setPredictions(trafficPredictions);
-      if (trafficPredictions.some(p => (p as any).isFallback)) {
-        setIsAiOffline(true);
-      }
 
       if (mode === 'alternate') {
         setIsFindingAlternatives(true);
