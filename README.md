@@ -1,20 +1,16 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/f38c308f-b29e-42e4-a863-c0a798db07f8
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Traffic congestion is a key issue that cities 
+experience because of fast urbanization and an increase in 
+vehicles. The conventional method of addressing this problem is 
+insufficiently effective to deal with the dynamic and time-varying 
+circumstances that frequently arise when driving. This study 
+proposes an intelligent routing and smart traffic prediction 
+method based on AI, deep learning, and optimization approaches. 
+Feature engineering and normalization are used to process and 
+prepare the data acquired through the TomTom Traffic API for 
+use. In this study, a bidirectional LSTM is used for forecasting and 
+prediction. With an 𝑹𝟐 value of 0.96 and minimal error values, the 
+findings from the suggested model have demonstrated superior 
+performance when compared to traditional approaches, such as 
+machine learning and other deep learning techniques. For 
+forward-thinking traffic planning, the suggested approach can be 
+applied successfully.
