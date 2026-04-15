@@ -44,6 +44,7 @@ import {
   BarChart3,
   BrainCircuit,
   CheckCircle2,
+  Columns,
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -1003,29 +1004,38 @@ export default function App() {
               {/* Route Details or Planner */}
               {selectedRouteId ? (
                 <section className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <button 
-                      onClick={() => {
-                        setSelectedRouteId(null);
-                        setAlternativeRoutes([]);
-                        setRouteAdvice(null);
-                      }}
-                      className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"
-                    >
-                      <ArrowRight className="w-3 h-3 rotate-180" />
-                      Back to Planner
-                    </button>
-                    <button 
-                      onClick={() => selectedRoute && handleSaveRoute(selectedRoute)}
-                      className={`p-2 rounded-lg transition-all ${
-                        user?.savedRoutes?.some(r => r.start === routeStart && r.end === routeEnd)
-                          ? 'bg-blue-600/20 text-blue-400'
-                          : 'bg-zinc-800 text-zinc-400 hover:text-blue-400'
-                      }`}
-                    >
-                      <Bookmark className="w-4 h-4" fill={user?.savedRoutes?.some(r => r.start === routeStart && r.end === routeEnd) ? "currentColor" : "none"} />
-                    </button>
-                  </div>
+                    <div className="flex items-center justify-between">
+                      <button 
+                        onClick={() => {
+                          setSelectedRouteId(null);
+                          setAlternativeRoutes([]);
+                          setRouteAdvice(null);
+                        }}
+                        className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors"
+                      >
+                        <ArrowRight className="w-3 h-3 rotate-180" />
+                        Back to Planner
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => setShowCompareModal(true)}
+                          className="p-2 bg-zinc-800 text-zinc-400 hover:text-blue-400 rounded-lg transition-all"
+                          title="Compare Routes"
+                        >
+                          <Columns className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => selectedRoute && handleSaveRoute(selectedRoute)}
+                          className={`p-2 rounded-lg transition-all ${
+                            user?.savedRoutes?.some(r => r.start === routeStart && r.end === routeEnd)
+                              ? 'bg-blue-600/20 text-blue-400'
+                              : 'bg-zinc-800 text-zinc-400 hover:text-blue-400'
+                          }`}
+                        >
+                          <Bookmark className="w-4 h-4" fill={user?.savedRoutes?.some(r => r.start === routeStart && r.end === routeEnd) ? "currentColor" : "none"} />
+                        </button>
+                      </div>
+                    </div>
 
                   <div className="p-6 bg-gradient-to-br from-blue-600/10 to-purple-600/10 border border-blue-500/20 rounded-3xl space-y-4">
                     <div className="flex justify-between items-start">
@@ -1275,7 +1285,13 @@ export default function App() {
                         <div className="space-y-3 pt-4 border-t border-zinc-800/50">
                           <div className="flex items-center justify-between">
                             <h4 className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Available Routes</h4>
-                            <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">{routes.length} paths found</span>
+                            <button 
+                              onClick={() => setShowCompareModal(true)}
+                              className="flex items-center gap-1.5 px-3 py-1 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 text-[9px] font-bold rounded-lg transition-all border border-blue-500/20"
+                            >
+                              <Columns className="w-3 h-3" />
+                              Compare All
+                            </button>
                           </div>
                           <div className="space-y-2">
                             {routes.map((route, idx) => (
