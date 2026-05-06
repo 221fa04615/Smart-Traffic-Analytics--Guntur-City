@@ -1,20 +1,3 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/f38c308f-b29e-42e4-a863-c0a798db07f8
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Urban traffic congestion has become a significant challenge, particularly in rapidly growing Tier-2 cities where infrastructure development often lags behind traffic demand. Traditional traffic systems rely on static and reactive mechanisms, which are insufficient for handling dynamic real-world conditions.
+In this work, we propose Guntur Smart Traffic AI, an intelligent transportation framework that integrates LSTM-based predictive analytics with Generative AI reasoning. The system forecasts future traffic conditions and transforms numerical predictions into meaningful, human-readable insights.
+By combining prediction, explainability, and real-time visualization through an interactive dashboard, the proposed system aims to improve route optimization, reduce congestion, and enhance decision-making for urban mobility.
