@@ -393,10 +393,11 @@ export default function App() {
           if (dest) {
             setRouteEnd(dest.id);
             setActiveTab('navigate');
-            // Allow state to update before searching
+            // Ensure state is ready and search is triggered
             setTimeout(() => {
+              if (!routeStart) setRouteStart('AMA'); // Default to Amaravathi Road if no start set
               handleRouteSearch('fastest');
-            }, 300);
+            }, 500);
           }
         } else if (result.action === 'query_traffic' && result.params.location) {
           setActiveTab('explore');
