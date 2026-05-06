@@ -58,6 +58,19 @@ export const TRAFFIC_EDGES: TrafficEdge[] = [
     source: 'ZIN', target: 'LAK', distance: 0.7, baseTime: 2, signals: 1,
     geometry: [[16.3104, 80.4372], [16.3085, 80.4368], [16.3067, 80.4365]]
   },
+  // Add some critical shortcuts
+  { 
+    source: 'AMA', target: 'LOD', distance: 2.1, baseTime: 5, signals: 2,
+    geometry: [[16.315, 80.425], [16.3130, 80.4320], [16.31, 80.44]]
+  },
+  { 
+    source: 'LOD', target: 'RLY', distance: 1.2, baseTime: 3, signals: 1,
+    geometry: [[16.31, 80.44], [16.3050, 80.4410], [16.3008, 80.4428]]
+  },
+  { 
+    source: 'RLY', target: 'NAA', distance: 1.1, baseTime: 3, signals: 1,
+    geometry: [[16.3008, 80.4428], [16.3015, 80.4400], [16.3026, 80.4369]]
+  },
   { 
     source: 'RLY', target: 'OBS', distance: 1.0, baseTime: 3, signals: 2,
     geometry: [[16.3008, 80.4428], [16.2990, 80.4420], [16.2972, 80.4417]]
@@ -81,6 +94,10 @@ export const TRAFFIC_EDGES: TrafficEdge[] = [
   { 
     source: 'MAN', target: 'BRO', distance: 1.6, baseTime: 5, signals: 2,
     geometry: [[16.312, 80.428], [16.3080, 80.4310], [16.3035, 80.434]]
+  },
+  { 
+    source: 'BRO', target: 'KUG', distance: 0.5, baseTime: 1, signals: 0,
+    geometry: [[16.3035, 80.434], [16.3015, 80.4335], [16.3002, 80.4332]]
   },
   { 
     source: 'CHU', target: 'MOO', distance: 1.3, baseTime: 4, signals: 1,
@@ -115,40 +132,52 @@ export const TRAFFIC_EDGES: TrafficEdge[] = [
     geometry: [[16.29, 80.42], [16.2950, 80.4280], [16.3002, 80.4332]]
   },
   { 
-    source: 'LAK', target: 'ZIN', distance: 0.7, baseTime: 2, signals: 1,
-    geometry: [[16.3067, 80.4365], [16.3085, 80.4368], [16.3104, 80.4372]]
+    source: 'LAK', target: 'MAN', distance: 1.1, baseTime: 3, signals: 1,
+    geometry: [[16.3067, 80.4365], [16.3090, 80.4320], [16.312, 80.428]]
   },
   { 
-    source: 'BRO', target: 'LAK', distance: 1.2, baseTime: 4, signals: 2,
-    geometry: [[16.3035, 80.434], [16.3050, 80.4360], [16.3067, 80.4365]]
-  },
-  { 
-    source: 'NAA', target: 'RLY', distance: 0.9, baseTime: 3, signals: 1,
-    geometry: [[16.3026, 80.4369], [16.3015, 80.4400], [16.3008, 80.4428]]
-  },
-  { 
-    source: 'LOD', target: 'SAN', distance: 2.0, baseTime: 6, signals: 3,
-    geometry: [[16.31, 80.44], [16.3150, 80.4450], [16.32, 80.45]]
-  },
-  { 
-    source: 'SAN', target: 'GOR', distance: 3.5, baseTime: 10, signals: 5,
-    geometry: [[16.32, 80.45], [16.3300, 80.4450], [16.3412, 80.4412]]
-  },
-  { 
-    source: 'PAT', target: 'RLY', distance: 0.8, baseTime: 2, signals: 1,
-    geometry: [[16.305, 80.445], [16.3030, 80.4440], [16.3008, 80.4428]]
-  },
-  { 
-    source: 'MAN', target: 'LAK', distance: 1.1, baseTime: 3, signals: 1,
-    geometry: [[16.312, 80.428], [16.3090, 80.4320], [16.3067, 80.4365]]
+    source: 'RLY', target: 'NTR', distance: 2.5, baseTime: 8, signals: 3,
+    geometry: [[16.3008, 80.4428], [16.298, 80.45], [16.2955, 80.4561]]
   },
   { 
     source: 'PER', target: 'GUJ', distance: 6.5, baseTime: 15, signals: 4,
     geometry: [[16.3194, 80.3387], [16.3130, 80.3750], [16.3069, 80.4106]]
   },
   { 
-    source: 'PER', target: 'AMA', distance: 7.2, baseTime: 18, signals: 5,
-    geometry: [[16.3194, 80.3387], [16.3170, 80.3800], [16.315, 80.425]]
+    source: 'GUJ', target: 'LAK', distance: 1.5, baseTime: 4, signals: 1,
+    geometry: [[16.3069, 80.4106], [16.3068, 80.4230], [16.3067, 80.4365]]
+  },
+  { 
+    source: 'ZIN', target: 'RLY', distance: 0.9, baseTime: 2, signals: 1,
+    geometry: [[16.3104, 80.4372], [16.3050, 80.4400], [16.3008, 80.4428]]
+  },
+  { 
+    source: 'AMA', target: 'LAK', distance: 1.3, baseTime: 3, signals: 1,
+    geometry: [[16.315, 80.425], [16.3110, 80.4300], [16.3067, 80.4365]]
+  },
+  { 
+    source: 'NAA', target: 'OBS', distance: 0.7, baseTime: 2, signals: 1,
+    geometry: [[16.3026, 80.4369], [16.3000, 80.4390], [16.2972, 80.4417]]
+  },
+  { 
+    source: 'PAT', target: 'NAA', distance: 0.6, baseTime: 2, signals: 1,
+    geometry: [[16.305, 80.445], [16.3038, 80.4410], [16.3026, 80.4369]]
+  },
+  { 
+    source: 'LAK', target: 'ZIN', distance: 0.6, baseTime: 2, signals: 1,
+    geometry: [[16.3067, 80.4365], [16.3085, 80.4368], [16.3104, 80.4372]]
+  },
+  { 
+    source: 'NAA', target: 'PAT', distance: 0.5, baseTime: 2, signals: 1,
+    geometry: [[16.3026, 80.4369], [16.3038, 80.4410], [16.305, 80.445]]
+  },
+  { 
+    source: 'LOD', target: 'SAN', distance: 2.0, baseTime: 6, signals: 3,
+    geometry: [[16.31, 80.44], [16.3150, 80.4450], [16.32, 80.45]]
+  },
+  { 
+    source: 'LAK', target: 'NAA', distance: 1.1, baseTime: 3, signals: 2,
+    geometry: [[16.3067, 80.4365], [16.3045, 80.4367], [16.3026, 80.4369]]
   },
 ];
 

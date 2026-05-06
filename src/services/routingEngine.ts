@@ -99,13 +99,15 @@ export async function calculateRoute(
         congestion = (congestion * 0.4) + (segmentPrediction.predictedCongestion * 0.6);
       }
       
-      const congestionFactor = congestion / 50;
+      const congestionFactor = congestion / 100; // Multiplier range 0-1
       
       let weight = edge.distance;
       if (mode === 'fastest') {
-        const signalDelay = isEmergency ? 0.1 : 0.8;
-        // Use a more aggressive time-based weight for fastest
-        weight = (edge.baseTime * (1 + congestionFactor * 2)) + (edge.signals * signalDelay);
+        const signalDelay = isEmergency ? 0.1 : 0.5;
+        // Balance base time and congestion impact
+        // Use a more nuanced congestion impact to avoid unnecessarily long detours
+        const congestionImpact = Math.pow(congestionFactor, 1.5) * 2.0; 
+        weight = (edge.baseTime * (1 + congestionImpact)) + (edge.signals * signalDelay);
       } else if (mode === 'shortest') {
         // Strictly distance for shortest
         weight = edge.distance;

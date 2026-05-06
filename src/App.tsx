@@ -393,7 +393,10 @@ export default function App() {
           if (dest) {
             setRouteEnd(dest.id);
             setActiveTab('navigate');
-            handleRouteSearch('fastest');
+            // Allow state to update before searching
+            setTimeout(() => {
+              handleRouteSearch('fastest');
+            }, 300);
           }
         } else if (result.action === 'query_traffic' && result.params.location) {
           setActiveTab('explore');

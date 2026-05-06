@@ -16,7 +16,7 @@ export interface TrafficPrediction {
 
 // Simple in-memory cache to reduce API calls
 const aiCache = new Map<string, { data: any, timestamp: number }>();
-const CACHE_TTL = 900000; // 15 minutes
+const CACHE_TTL = 1800000; // 30 minutes
 
 function getCached(key: string) {
   const cached = aiCache.get(key);
@@ -31,15 +31,13 @@ function setCached(key: string, data: any) {
 }
 
 function isQuotaError(error: any): boolean {
-  const errStr = JSON.stringify(error).toLowerCase();
+  if (!error) return false;
+  const errStr = String(error).toLowerCase() + (error.message ? " " + error.message.toLowerCase() : "");
   return errStr.includes("429") || 
          errStr.includes("quota") || 
          errStr.includes("resource_exhausted") ||
-         (error?.message && (
-           error.message.toLowerCase().includes("429") || 
-           error.message.toLowerCase().includes("quota") || 
-           error.message.toLowerCase().includes("resource_exhausted")
-         ));
+         errStr.includes("overburdened") ||
+         errStr.includes("limit");
 }
 
 export async function getTrafficForecast(
@@ -318,7 +316,7 @@ export async function getDailyBriefing(currentData: any[]): Promise<string> {
   } catch (error: any) {
     const quotaExceeded = isQuotaError(error);
     if (!quotaExceeded) console.error("Briefing Error:", error);
-    return quotaExceeded ? "Briefing unavailable (AI Quota Exceeded). Traffic is currently normal." : "Unable to generate briefing at this time.";
+    return quotaExceeded ? "Briefing unavailable (AI Quota Exceeded). Traffic is currently normal." : `Briefing temporarily unavailable. Traffic is currently normal across the city. (${String(error).slice(0, 40)}...)`;
   }
 }
 
