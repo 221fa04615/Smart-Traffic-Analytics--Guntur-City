@@ -890,12 +890,12 @@ export default function App() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 bg-zinc-800/30 border border-zinc-700/30 rounded-2xl">
                   <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mb-1">R² Score</p>
-                  <p className="text-xl font-mono font-bold text-blue-400">0.96</p>
+                  <p className="text-xl font-mono font-bold text-blue-400">0.92</p>
                   <p className="text-[8px] text-zinc-500 mt-1 italic">High predictive accuracy</p>
                 </div>
                 <div className="p-4 bg-zinc-800/30 border border-zinc-700/30 rounded-2xl">
                   <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest mb-1">MAE</p>
-                  <p className="text-xl font-mono font-bold text-purple-400">1.50</p>
+                  <p className="text-xl font-mono font-bold text-purple-400">2.85</p>
                   <p className="text-[8px] text-zinc-500 mt-1 italic">Mean Absolute Error (km/h)</p>
                 </div>
               </div>
